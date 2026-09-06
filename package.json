@@ -1,0 +1,15 @@
+{
+    "name": "grammy-vercel",
+    "author": "Vladislav Ponomarev <PonomareVlad@users.noreply.github.com> (https://PonomareVlad.ru)",
+    "funding": "https://PonomareVlad.ru/donate",
+    "license": "MIT",
+    "scripts": {
+        "postprepare": "touch .env",
+        "env": "vercel env pull .env",
+        "build": "node scripts/build.mjs",
+        "start": "node --watch --env-file=.env scripts/start.mjs"
+    },
+    "dependencies": {
+        "grammy": "^1.17.1"
+    }
+}
