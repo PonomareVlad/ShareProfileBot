@@ -10,6 +10,10 @@
         "start": "node --watch --env-file=.env scripts/start.mjs"
     },
     "dependencies": {
-        "grammy": "^1.17.1"
+        "@grammyjs/files": "^1.2.0",
+        "grammy": "^1.46.0"
+    },
+    "devDependencies": {
+        "prettier": "^3.9.6"
     }
 }
