@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { Bot, InputFile } from 'grammy'
+import { Bot, InlineQueryResultBuilder, InputFile } from 'grammy'
 
 export const {
 
@@ -51,7 +51,8 @@ bot.on('inline_query', async ctx => {
     if (!query) return ctx.answerInlineQuery([], { cache_time: 0, is_personal: true })
     const value = getValueByPath(await ctx.api.getChat(ctx.from.id), query)
     if (value === undefined) return ctx.answerInlineQuery([], { cache_time: 0, is_personal: true })
+    const text = formatValue(value)
     return ctx.answerInlineQuery([isPhoto(value)
-        ? { type: 'photo', id: createResultId(query), photo_file_id: await getPhotoFileId(ctx.api, ctx.from.id, value) }
-        : { type: 'article', id: createResultId(query), title: query, description: formatValue(value).slice(0, 128), input_message_content: { message_text: formatValue(value) } }], { cache_time: 0, is_personal: true })
+        ? InlineQueryResultBuilder.photoCached(createResultId(query), await getPhotoFileId(ctx.api, ctx.from.id, value)).text(text)
+        : InlineQueryResultBuilder.article(createResultId(query), query, { description: text.slice(0, 128) }).text(text)], { cache_time: 0, is_personal: true })
 })
