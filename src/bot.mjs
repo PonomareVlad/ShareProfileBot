@@ -1,6 +1,6 @@
 import { Bot } from 'grammy'
 
-const INLINE_QUERY_EXAMPLES = ['name', 'bio', 'photo', 'birthdate', 'location']
+const INLINE_QUERY_EXAMPLES = ['first_name', 'bio', 'photo', 'birthdate', 'business_location.location']
 
 export const {
 
@@ -147,13 +147,13 @@ const createStartMessage = username =>
 const START_KEYBOARD = {
     inline_keyboard: [
         [
-            createSwitchInlineButton('Имя', 'name'),
+            createSwitchInlineButton('Имя', 'first_name'),
             createSwitchInlineButton('Био', 'bio'),
             createSwitchInlineButton('Фото', 'photo'),
         ],
         [
             createSwitchInlineButton('Дата рождения', 'birthdate'),
-            createSwitchInlineButton('Локация', 'location'),
+            createSwitchInlineButton('Локация бизнеса', 'business_location.location'),
         ],
     ],
 }
