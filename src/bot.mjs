@@ -29,13 +29,22 @@ safe.command('start', ctx =>
 )
 
 safe.on('inline_query', async ctx => {
-    Object.assign(ctx.chat, await ctx.getChat().catch(console.warn))
-    ctx.chat.photos = await ctx.getUserProfilePhotos().catch(console.warn)
-    ctx.chat.audios = await ctx.getUserProfileAudios().catch(console.warn)
-    ctx.chat.gifts = await ctx.getUserGifts().catch(console.warn)
-    ctx.chat.messages = await ctx
-        .getUserPersonalChatMessages()
-        .catch(console.warn)
+    Object.assign(
+        ctx.chat,
+        await ctx.api.getChat(ctx.from.id).catch(console.warn),
+        {
+            photos: await ctx.api
+                .getUserProfilePhotos(ctx.from.id)
+                .catch(console.warn),
+            audios: await ctx.api
+                .getUserProfileAudios(ctx.from.id)
+                .catch(console.warn),
+            messages: await ctx.api
+                .getUserPersonalChatMessages(ctx.from.id, 20)
+                .catch(console.warn),
+            gifts: await ctx.api.getUserGifts(ctx.from.id).catch(console.warn),
+        }
+    )
     const query = ctx.inlineQuery.query.trim()
     const result = get(ctx.chat, query)
     const results = []
