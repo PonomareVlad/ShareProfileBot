@@ -1,4 +1,4 @@
-import { hydrateFiles } from '@grammyjs/files'
+// import { hydrateFiles } from '@grammyjs/files'
 import { Bot, InlineKeyboard, InlineQueryResultBuilder } from 'grammy'
 
 export const {
@@ -9,7 +9,7 @@ export const {
 
 export const bot = /** @type {Bot<BotContext, BotApi>} */ new Bot(token)
 
-bot.api.config.use(hydrateFiles(token, { apiRoot }))
+// bot.api.config.use(hydrateFiles(token, { apiRoot }))
 
 const safe = bot.errorBoundary(console.error)
 
@@ -56,18 +56,21 @@ safe.on('inline_query', async ctx => {
     const results = []
     switch (true) {
         case typeof result === 'object' && 'file_id' in result: {
+            console.log(await ctx.api.getFile(result.file_id))
             results.push(
                 InlineQueryResultBuilder.photoCached(query, result.file_id)
             )
             break
         }
         case typeof result === 'object' && 'big_file_id' in result: {
+            console.log(await ctx.api.getFile(result.big_file_id))
             results.push(
                 InlineQueryResultBuilder.photoCached(query, result.big_file_id)
             )
             break
         }
         case typeof result === 'string' && query.endsWith('file_id'): {
+            console.log(await ctx.api.getFile(result))
             results.push(InlineQueryResultBuilder.photoCached(query, result))
             break
         }
