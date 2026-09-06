@@ -91,6 +91,7 @@ const trimText = (text, maxLength = 4000) =>
     text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text
 
 const createResultId = prefix => createHash('sha256').update(prefix).digest('hex')
+const REUPLOADED_CHAT_PHOTO_IDS = new Map()
 
 const isChatNotFoundError = error =>
     Boolean(
@@ -103,16 +104,48 @@ const isChatNotFoundError = error =>
             error.description.includes('chat not found')
     )
 
-const createProfileResult = (path, value) => {
-    const title = `Профиль: ${path}`
-    const photoFileId =
-        value && typeof value === 'object' && !Array.isArray(value) ? value.big_file_id || value.small_file_id : undefined
+const isChatPhoto = value =>
+    Boolean(
+        value &&
+            typeof value === 'object' &&
+            !Array.isArray(value) &&
+            (typeof value.big_file_id === 'string' || typeof value.small_file_id === 'string')
+    )
 
-    if (photoFileId) {
+const getTelegramFileUrl = filePath => `https://api.telegram.org/file/bot${token}/${filePath}`
+
+const getReuploadedPhotoFileId = async (api, userId, photo) => {
+    const sourceFileId = photo.big_file_id || photo.small_file_id
+
+    if (REUPLOADED_CHAT_PHOTO_IDS.has(sourceFileId)) {
+        return REUPLOADED_CHAT_PHOTO_IDS.get(sourceFileId)
+    }
+
+    const { file_path } = await api.getFile(sourceFileId)
+    const message = await api.sendPhoto(userId, getTelegramFileUrl(file_path), { disable_notification: true })
+    const reuploadedPhotoFileId = message.photo?.at(-1)?.file_id
+
+    if (!reuploadedPhotoFileId) {
+        throw new Error('Failed to reupload chat photo')
+    }
+
+    REUPLOADED_CHAT_PHOTO_IDS.set(sourceFileId, reuploadedPhotoFileId)
+
+    try {
+        await api.deleteMessage(userId, message.message_id)
+    } catch {}
+
+    return reuploadedPhotoFileId
+}
+
+const createProfileResult = async (api, userId, path, value) => {
+    const title = `Профиль: ${path}`
+
+    if (isChatPhoto(value)) {
         return {
             type: 'photo',
             id: createResultId(`photo:${path}`),
-            photo_file_id: photoFileId,
+            photo_file_id: await getReuploadedPhotoFileId(api, userId, value),
             title,
             description: 'Фото из Telegram профиля',
             caption: title,
@@ -225,7 +258,11 @@ bot.on('inline_query', async ctx => {
     const { path, value } = resolveQueryValue(chat, query)
 
     return ctx.answerInlineQuery(
-        [value === undefined ? createNotFoundResult(ctx.me.username, query, chat) : createProfileResult(path, value)],
+        [
+            value === undefined
+                ? createNotFoundResult(ctx.me.username, query, chat)
+                : await createProfileResult(ctx.api, ctx.from.id, path, value),
+        ],
         {
             cache_time: 0,
             is_personal: true,
