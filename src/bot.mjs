@@ -61,7 +61,7 @@ safe.on('inline_query', async ctx => {
             results.push(InlineQueryResultBuilder.photo(query, file.getUrl()))
             break
         }
-        case ['string', 'number'].includes(typeof result): {
+        case ['string', 'number', 'undefined'].includes(typeof result): {
             results.push(
                 InlineQueryResultBuilder.article(query, String(result), {
                     description: String(result),
