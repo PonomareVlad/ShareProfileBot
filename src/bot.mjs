@@ -1,4 +1,4 @@
-import mime from 'mime/lite'
+import mime from 'mime'
 // import { hydrateFiles } from '@grammyjs/files'
 import { Bot, InlineKeyboard, InlineQueryResultBuilder } from 'grammy'
 
