@@ -48,6 +48,7 @@ safe.on('inline_query', async ctx => {
     )
     const query = ctx.inlineQuery.query.trim()
     const result = get(profile, query)
+    console.log(query, result)
     const results = []
     switch (true) {
         case typeof result === 'object' && 'big_file_id' in result: {
@@ -77,6 +78,7 @@ safe.on('inline_query', async ctx => {
             break
         }
     }
+    console.log(results)
     return ctx.answerInlineQuery(results, {
         button: {
             text: 'Разрешите боту доступ к вашим данным',
