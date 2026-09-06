@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { Bot } from 'grammy'
 
 const INLINE_QUERY_EXAMPLES = ['first_name', 'bio', 'photo', 'birthdate', 'business_location.location']
@@ -24,7 +25,7 @@ const formatInlineExample = (username, query) => `@${username} ${query}`
 
 const createExampleResult = (username, query) => ({
     type: 'article',
-    id: `example:${query}`.slice(0, 64),
+    id: createResultId(`example:${query}`),
     title: `Пример: ${query}`,
     description: `Вставить ${formatInlineExample(username, query)} в выбранный чат`,
     input_message_content: {
@@ -32,11 +33,15 @@ const createExampleResult = (username, query) => ({
     },
 })
 
-const getValueByPath = (value, path) =>
-    path
-        .split('.')
-        .filter(Boolean)
-        .reduce((result, key) => result?.[key], value)
+const getValueByPath = (value, path) => {
+    const keys = path.split('.')
+
+    if (keys.some(key => !key)) {
+        return undefined
+    }
+
+    return keys.reduce((result, key) => (result && typeof result === 'object' && Object.hasOwn(result, key) ? result[key] : undefined), value)
+}
 
 const getDisplayName = chat => [chat.first_name, chat.last_name].filter(Boolean).join(' ') || chat.title
 
@@ -85,7 +90,18 @@ const formatValue = value => {
 const trimText = (text, maxLength = 4000) =>
     text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text
 
-const createResultId = prefix => prefix.replaceAll(/\s+/g, '-').slice(0, 64)
+const createResultId = prefix => createHash('sha256').update(prefix).digest('hex')
+
+const isChatNotFoundError = error =>
+    Boolean(
+        error &&
+            typeof error === 'object' &&
+            'error_code' in error &&
+            error.error_code === 400 &&
+            'description' in error &&
+            typeof error.description === 'string' &&
+            error.description.includes('chat not found')
+    )
 
 const createProfileResult = (path, value) => {
     const title = `Профиль: ${path}`
@@ -178,18 +194,15 @@ bot.on('inline_query', async ctx => {
         })
     }
 
-    try {
-        const chat = await ctx.api.getChat(ctx.from.id)
-        const { path, value } = resolveQueryValue(chat, query)
+    let chat
 
-        return ctx.answerInlineQuery(
-            [value === undefined ? createNotFoundResult(ctx.me.username, query, chat) : createProfileResult(path, value)],
-            {
-                cache_time: 0,
-                is_personal: true,
-            }
-        )
-    } catch {
+    try {
+        chat = await ctx.api.getChat(ctx.from.id)
+    } catch (error) {
+        if (!isChatNotFoundError(error)) {
+            throw error
+        }
+
         return ctx.answerInlineQuery(
             [
                 {
@@ -208,4 +221,14 @@ bot.on('inline_query', async ctx => {
             }
         )
     }
+
+    const { path, value } = resolveQueryValue(chat, query)
+
+    return ctx.answerInlineQuery(
+        [value === undefined ? createNotFoundResult(ctx.me.username, query, chat) : createProfileResult(path, value)],
+        {
+            cache_time: 0,
+            is_personal: true,
+        }
+    )
 })
