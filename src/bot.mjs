@@ -29,8 +29,9 @@ safe.command('start', ctx =>
 )
 
 safe.on('inline_query', async ctx => {
-    Object.assign(
-        ctx.chat,
+    const profile = Object.assign(
+        {},
+        ctx.from,
         await ctx.api.getChat(ctx.from.id).catch(() => {}),
         {
             photos: await ctx.api
@@ -46,7 +47,7 @@ safe.on('inline_query', async ctx => {
         }
     )
     const query = ctx.inlineQuery.query.trim()
-    const result = get(ctx.chat, query)
+    const result = get(profile, query)
     const results = []
     switch (true) {
         case 'big_file_id' in result: {
