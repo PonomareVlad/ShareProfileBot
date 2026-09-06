@@ -1,4 +1,6 @@
-import mime from 'mime'
+import { Mime } from 'mime/lite'
+import otherTypes from 'mime/types/other.js'
+import standardTypes from 'mime/types/standard.js'
 // import { hydrateFiles } from '@grammyjs/files'
 import { Bot, InlineKeyboard, InlineQueryResultBuilder } from 'grammy'
 
@@ -13,6 +15,10 @@ export const bot = /** @type {Bot<BotContext, BotApi>} */ new Bot(token)
 // bot.api.config.use(hydrateFiles(token, { apiRoot }))
 
 const safe = bot.errorBoundary(console.error)
+
+const mime = new Mime(standardTypes, otherTypes, {
+    'sticker/x-tgsticker': ['tgs'],
+})
 
 const get = (object, path) =>
     path
@@ -89,6 +95,15 @@ safe.on('inline_query', async ctx => {
                     )
                     break
                 }
+                case 'sticker': {
+                    results.push(
+                        InlineQueryResultBuilder.stickerCached(
+                            query,
+                            result.file_id
+                        )
+                    )
+                    break
+                }
                 default: {
                     results.push(
                         InlineQueryResultBuilder.documentCached(
@@ -133,6 +148,12 @@ safe.on('inline_query', async ctx => {
                 case 'audio': {
                     results.push(
                         InlineQueryResultBuilder.audioCached(query, result)
+                    )
+                    break
+                }
+                case 'sticker': {
+                    results.push(
+                        InlineQueryResultBuilder.stickerCached(query, result)
                     )
                     break
                 }
