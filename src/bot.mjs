@@ -78,7 +78,10 @@ safe.on('inline_query', async ctx => {
         }
     }
     return ctx.answerInlineQuery(results, {
-        button: { text: 'Разрешите боту доступ к вашим данным' },
+        button: {
+            text: 'Разрешите боту доступ к вашим данным',
+            start_parameter: '_',
+        },
         is_personal: true,
         cache_time: 0,
     })
