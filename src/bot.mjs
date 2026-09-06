@@ -55,12 +55,13 @@ safe.on('inline_query', async ctx => {
     console.log(query, result)
     const results = []
     switch (true) {
-        case typeof result === 'object' && 'big_file_id' in result: {
+        case typeof result === 'object' &&
+            ['big_file_id', 'file_id'].some(prop => prop in result): {
             const file = await ctx.api.getFile(result.big_file_id)
             results.push(InlineQueryResultBuilder.photo(query, file.getUrl()))
             break
         }
-        case typeof result === 'string' && query.endsWith('.big_file_id'): {
+        case typeof result === 'string' && query.endsWith('file_id'): {
             const file = await ctx.api.getFile(result)
             results.push(InlineQueryResultBuilder.photo(query, file.getUrl()))
             break
