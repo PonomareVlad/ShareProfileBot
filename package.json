@@ -11,7 +11,8 @@
     },
     "dependencies": {
         "@grammyjs/files": "^1.2.0",
-        "grammy": "^1.46.0"
+        "grammy": "^1.46.0",
+        "mime": "^4.1.0"
     },
     "devDependencies": {
         "prettier": "^3.9.6"

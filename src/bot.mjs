@@ -1,3 +1,4 @@
+import mime from 'mime/lite'
 // import { hydrateFiles } from '@grammyjs/files'
 import { Bot, InlineKeyboard, InlineQueryResultBuilder } from 'grammy'
 
@@ -56,10 +57,47 @@ safe.on('inline_query', async ctx => {
     const results = []
     switch (true) {
         case typeof result === 'object' && 'file_id' in result: {
-            console.log(await ctx.api.getFile(result.file_id))
-            results.push(
-                InlineQueryResultBuilder.photoCached(query, result.file_id)
-            )
+            const { file_path } = await ctx.api.getFile(result.file_id)
+            switch (mime.getType(file_path)?.split('/').at(0)) {
+                case 'image': {
+                    results.push(
+                        InlineQueryResultBuilder.photoCached(
+                            query,
+                            result.file_id
+                        )
+                    )
+                    break
+                }
+                case 'video': {
+                    results.push(
+                        InlineQueryResultBuilder.videoCached(
+                            query,
+                            result.file_id,
+                            result.file_id
+                        )
+                    )
+                    break
+                }
+                case 'audio': {
+                    results.push(
+                        InlineQueryResultBuilder.audioCached(
+                            query,
+                            result.file_id
+                        )
+                    )
+                    break
+                }
+                default: {
+                    results.push(
+                        InlineQueryResultBuilder.documentCached(
+                            query,
+                            result.file_id,
+                            result.file_id
+                        )
+                    )
+                    break
+                }
+            }
             break
         }
         case typeof result === 'object' && 'big_file_id' in result: {
@@ -70,8 +108,41 @@ safe.on('inline_query', async ctx => {
             break
         }
         case typeof result === 'string' && query.endsWith('file_id'): {
-            console.log(await ctx.api.getFile(result))
-            results.push(InlineQueryResultBuilder.photoCached(query, result))
+            const { file_path } = await ctx.api.getFile(result)
+            switch (mime.getType(file_path)?.split('/').at(0)) {
+                case 'image': {
+                    results.push(
+                        InlineQueryResultBuilder.photoCached(query, result)
+                    )
+                    break
+                }
+                case 'video': {
+                    results.push(
+                        InlineQueryResultBuilder.videoCached(
+                            query,
+                            result,
+                            result
+                        )
+                    )
+                    break
+                }
+                case 'audio': {
+                    results.push(
+                        InlineQueryResultBuilder.audioCached(query, result)
+                    )
+                    break
+                }
+                default: {
+                    results.push(
+                        InlineQueryResultBuilder.documentCached(
+                            query,
+                            result,
+                            result
+                        )
+                    )
+                    break
+                }
+            }
             break
         }
         case ['string', 'number', 'undefined'].includes(typeof result): {
