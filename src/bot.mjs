@@ -98,7 +98,9 @@ safe.on('inline_query', async ctx => {
     console.log(query, result)
     const results = []
     switch (true) {
-        case typeof result === 'object' && 'file_id' in result: {
+        case Boolean(result) &&
+            typeof result === 'object' &&
+            'file_id' in result: {
             const { file_path } = await ctx.api.getFile(result.file_id)
             console.log(mime.getType(file_path), file_path)
             results.push(
@@ -106,10 +108,26 @@ safe.on('inline_query', async ctx => {
             )
             break
         }
-        case typeof result === 'object' && 'big_file_id' in result: {
+        case Boolean(result) &&
+            typeof result === 'object' &&
+            'big_file_id' in result: {
             console.log(await ctx.api.getFile(result.big_file_id))
             results.push(
                 InlineQueryResultBuilder.photoCached(query, result.big_file_id)
+            )
+            break
+        }
+        case Boolean(result) &&
+            typeof result === 'object' &&
+            'latitude' in result &&
+            'longitude' in result: {
+            results.push(
+                InlineQueryResultBuilder.location(
+                    query,
+                    query,
+                    result.latitude,
+                    result.longitude
+                )
             )
             break
         }
