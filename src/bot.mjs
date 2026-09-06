@@ -63,9 +63,9 @@ safe.on('inline_query', async ctx => {
         }
         case ['string', 'number'].includes(typeof result): {
             results.push(
-                InlineQueryResultBuilder.article(query, result, {
-                    description: result,
-                })
+                InlineQueryResultBuilder.article(query, String(result), {
+                    description: String(result),
+                }).text(String(result))
             )
             break
         }
@@ -73,7 +73,7 @@ safe.on('inline_query', async ctx => {
             results.push(
                 InlineQueryResultBuilder.article(query, typeof result, {
                     description: JSON.stringify(result),
-                })
+                }).text(JSON.stringify(result))
             )
             break
         }
