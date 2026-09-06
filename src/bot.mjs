@@ -55,8 +55,13 @@ safe.on('inline_query', async ctx => {
     console.log(query, result)
     const results = []
     switch (true) {
-        case typeof result === 'object' &&
-            ['big_file_id', 'file_id'].some(prop => prop in result): {
+        case typeof result === 'object' && 'file_id' in result: {
+            results.push(
+                InlineQueryResultBuilder.photoCached(query, result.file_id)
+            )
+            break
+        }
+        case typeof result === 'object' && 'big_file_id' in result: {
             results.push(
                 InlineQueryResultBuilder.photoCached(query, result.big_file_id)
             )
