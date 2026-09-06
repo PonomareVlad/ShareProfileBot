@@ -58,7 +58,9 @@ safe.on('inline_query', async ctx => {
     switch (true) {
         case typeof result === 'object' && 'file_id' in result: {
             const { file_path } = await ctx.api.getFile(result.file_id)
-            switch (mime.getType(file_path)?.split('/').at(0)) {
+            const mime_type = mime.getType(file_path)
+            console.log(mime_type, file_path)
+            switch (mime_type?.split('/').at(0)) {
                 case 'image': {
                     results.push(
                         InlineQueryResultBuilder.photoCached(
@@ -109,7 +111,9 @@ safe.on('inline_query', async ctx => {
         }
         case typeof result === 'string' && query.endsWith('file_id'): {
             const { file_path } = await ctx.api.getFile(result)
-            switch (mime.getType(file_path)?.split('/').at(0)) {
+            const mime_type = mime.getType(file_path)
+            console.log(mime_type, file_path)
+            switch (mime_type?.split('/').at(0)) {
                 case 'image': {
                     results.push(
                         InlineQueryResultBuilder.photoCached(query, result)
