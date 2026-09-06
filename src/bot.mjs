@@ -11,10 +11,12 @@ export const bot = /** @type {Bot<BotContext, BotApi>} */ new Bot(token)
 
 bot.api.config.use(hydrateFiles(token, { apiRoot }))
 
+const safe = bot.errorBoundary(console.error)
+
 const get = (object, path) =>
     path.split('.').reduce((object, key) => object?.[key], object)
 
-bot.command('start', ctx =>
+safe.command('start', ctx =>
     ctx.reply('Демо:', {
         reply_markup: new InlineKeyboard()
             .switchInlineCurrent('Имя', 'first_name')
@@ -26,7 +28,7 @@ bot.command('start', ctx =>
     })
 )
 
-bot.on('inline_query', async ctx => {
+safe.on('inline_query', async ctx => {
     Object.assign(ctx.chat, await ctx.getChat().catch(console.warn))
     ctx.chat.photos = await ctx.getUserProfilePhotos().catch(console.warn)
     ctx.chat.audios = await ctx.getUserProfileAudios().catch(console.warn)
