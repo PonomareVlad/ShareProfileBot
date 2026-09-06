@@ -14,7 +14,11 @@ bot.api.config.use(hydrateFiles(token, { apiRoot }))
 const safe = bot.errorBoundary(console.error)
 
 const get = (object, path) =>
-    path.split('.').reduce((object, key) => object?.[key], object)
+    path
+        .split('.')
+        .map(part => part.trim())
+        .filter(Boolean)
+        .reduce((object, key) => object?.[key], object)
 
 safe.command('start', ctx =>
     ctx.reply('Демо:', {
