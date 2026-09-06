@@ -21,7 +21,8 @@ bot.command('start', ctx =>
             .switchInlineCurrent('Фамилия', 'last_name')
             .switchInlineCurrent('О себе', 'bio')
             .switchInlineCurrent('День рождения', 'birthdate')
-            .switchInlineCurrent('Фото', 'photo'),
+            .switchInlineCurrent('Фото', 'photo')
+            .toFlowed(1),
     })
 )
 
