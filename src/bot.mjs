@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { Bot } from 'grammy'
+import { Bot, InputFile } from 'grammy'
 
 export const {
 
@@ -25,7 +25,7 @@ const getPhotoFileId = async (api, userId, photo) => {
     const sourceFileId = photo.big_file_id || photo.small_file_id
     if (PHOTO_FILE_IDS.has(sourceFileId)) return PHOTO_FILE_IDS.get(sourceFileId)
     const { file_path } = await api.getFile(sourceFileId)
-    const message = await api.sendPhoto(userId, `https://api.telegram.org/file/bot${token}/${file_path}`, { disable_notification: true })
+    const message = await api.sendPhoto(userId, new InputFile(new URL(`https://api.telegram.org/file/bot${token}/${file_path}`)), { disable_notification: true })
     const photoFileId = message.photo.at(-1).file_id
     PHOTO_FILE_IDS.set(sourceFileId, photoFileId)
     void api.deleteMessage(userId, message.message_id).catch(() => {})
