@@ -27,6 +27,42 @@ const get = (object, path) =>
         .filter(Boolean)
         .reduce((object, key) => object?.[key], object)
 
+const toInlineAttachmentResult = (query, file_id, file_path = '') => {
+    const normalizedQuery = query.toLowerCase()
+    const hasAttachment = name =>
+        normalizedQuery === name ||
+        normalizedQuery.includes(`.${name}.`) ||
+        normalizedQuery.endsWith(`.${name}`)
+    const mime_type = mime.getType(file_path)
+    const mime_kind = mime_type?.split('/').at(0)
+    switch (true) {
+        case hasAttachment('sticker'): {
+            return InlineQueryResultBuilder.stickerCached(query, file_id)
+        }
+        case hasAttachment('voice'): {
+            return InlineQueryResultBuilder.voiceCached(query, query, file_id)
+        }
+        case hasAttachment('animation') && mime_type === 'image/gif': {
+            return InlineQueryResultBuilder.gifCached(query, file_id)
+        }
+        case hasAttachment('animation') && mime_type === 'video/mp4': {
+            return InlineQueryResultBuilder.mpeg4gifCached(query, file_id)
+        }
+        case hasAttachment('photo') || mime_kind === 'image': {
+            return InlineQueryResultBuilder.photoCached(query, file_id)
+        }
+        case hasAttachment('video') || hasAttachment('video_note') || mime_kind === 'video': {
+            return InlineQueryResultBuilder.videoCached(query, query, file_id)
+        }
+        case hasAttachment('audio') || mime_kind === 'audio': {
+            return InlineQueryResultBuilder.audioCached(query, file_id)
+        }
+        default: {
+            return InlineQueryResultBuilder.documentCached(query, query, file_id)
+        }
+    }
+}
+
 safe.command('start', ctx =>
     ctx.reply('Демо:', {
         reply_markup: new InlineKeyboard()
@@ -62,112 +98,43 @@ safe.on('inline_query', async ctx => {
     console.log(query, result)
     const results = []
     switch (true) {
-        case typeof result === 'object' && 'file_id' in result: {
+        case Boolean(result) &&
+            typeof result === 'object' &&
+            'file_id' in result: {
             const { file_path } = await ctx.api.getFile(result.file_id)
-            const mime_type = mime.getType(file_path)
-            console.log(mime_type, file_path)
-            switch (mime_type?.split('/').at(0)) {
-                case 'image': {
-                    results.push(
-                        InlineQueryResultBuilder.photoCached(
-                            query,
-                            result.file_id
-                        )
-                    )
-                    break
-                }
-                case 'video': {
-                    results.push(
-                        InlineQueryResultBuilder.videoCached(
-                            query,
-                            result.file_id,
-                            result.file_id
-                        )
-                    )
-                    break
-                }
-                case 'audio': {
-                    results.push(
-                        InlineQueryResultBuilder.audioCached(
-                            query,
-                            result.file_id
-                        )
-                    )
-                    break
-                }
-                case 'sticker': {
-                    results.push(
-                        InlineQueryResultBuilder.stickerCached(
-                            query,
-                            result.file_id
-                        )
-                    )
-                    break
-                }
-                default: {
-                    results.push(
-                        InlineQueryResultBuilder.documentCached(
-                            query,
-                            result.file_id,
-                            result.file_id
-                        )
-                    )
-                    break
-                }
-            }
+            console.log(mime.getType(file_path), file_path)
+            results.push(
+                toInlineAttachmentResult(query, result.file_id, file_path)
+            )
             break
         }
-        case typeof result === 'object' && 'big_file_id' in result: {
+        case Boolean(result) &&
+            typeof result === 'object' &&
+            'big_file_id' in result: {
             console.log(await ctx.api.getFile(result.big_file_id))
             results.push(
                 InlineQueryResultBuilder.photoCached(query, result.big_file_id)
             )
             break
         }
+        case Boolean(result) &&
+            typeof result === 'object' &&
+            'latitude' in result &&
+            'longitude' in result: {
+            results.push(
+                InlineQueryResultBuilder.location(
+                    query,
+                    query,
+                    result.latitude,
+                    result.longitude
+                )
+            )
+            break
+        }
         case typeof result === 'string' && query.endsWith('file_id'): {
             const { file_path } = await ctx.api.getFile(result)
-            const mime_type = mime.getType(file_path)
-            console.log(mime_type, file_path)
-            switch (mime_type?.split('/').at(0)) {
-                case 'image': {
-                    results.push(
-                        InlineQueryResultBuilder.photoCached(query, result)
-                    )
-                    break
-                }
-                case 'video': {
-                    results.push(
-                        InlineQueryResultBuilder.videoCached(
-                            query,
-                            result,
-                            result
-                        )
-                    )
-                    break
-                }
-                case 'audio': {
-                    results.push(
-                        InlineQueryResultBuilder.audioCached(query, result)
-                    )
-                    break
-                }
-                case 'sticker': {
-                    results.push(
-                        InlineQueryResultBuilder.stickerCached(query, result)
-                    )
-                    break
-                }
-                default: {
-                    results.push(
-                        InlineQueryResultBuilder.documentCached(
-                            query,
-                            result,
-                            result
-                        )
-                    )
-                    break
-                }
-            }
+            console.log(mime.getType(file_path), file_path)
+            results.push(toInlineAttachmentResult(query, result, file_path))
             break
         }
         case ['string', 'number', 'undefined'].includes(typeof result): {
